@@ -662,5 +662,112 @@ input[type="text"]:focus, select:focus {
   }
 }
 
+/* Portrait Mobile optimization - Splits screen into top half 3D canvas and bottom half HUD/controls */
+@media (orientation: portrait) {
+  /* Stack game canvas in top half */
+  #canvas-container {
+    height: 48vh !important;
+    width: 100vw !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+  }
+  
+  /* Stack HUD panel in bottom half */
+  #hud {
+    position: absolute !important;
+    top: 48vh !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 52vh !important;
+    background: #06060f !important;
+    border-top: 4px solid var(--border-neon) !important;
+    padding: 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Align HUD components nicely in portrait */
+  .hud-top {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .hud-bottom {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    margin-top: 10px !important;
+  }
+
+  /* Scale down components to fit */
+  .retro-leaderboard {
+    padding: 6px 10px !important;
+    gap: 4px !important;
+  }
+  .leaderboard-row {
+    font-size: 0.6rem !important;
+  }
+  .lap-counter {
+    padding: 6px 12px !important;
+    font-size: 0.7rem !important;
+  }
+  .mini-map-container {
+    width: 60px !important;
+    height: 60px !important;
+  }
+  .retro-speedometer {
+    width: 80px !important;
+    padding: 4px 6px !important;
+  }
+  .dial-svg {
+    width: 50px !important;
+    height: 40px !important;
+  }
+  .speedometer-digits {
+    font-size: 0.5rem !important;
+  }
+  .power-up-box {
+    width: 48px !important;
+    height: 48px !important;
+    border-width: 2px !important;
+  }
+  .power-up-question {
+    font-size: 1.3rem !important;
+  }
+
+  /* Overlay touch controls on HUD bottom */
+  .touch-controls {
+    position: absolute !important;
+    bottom: 25px !important;
+    left: 0 !important;
+    width: 100vw !important;
+    justify-content: space-between !important;
+    padding: 0 24px !important;
+    box-sizing: border-box !important;
+  }
+
+  .joystick-container {
+    width: 100px !important;
+    height: 100px !important;
+  }
+  .joystick-base {
+    width: 90px !important;
+    height: 90px !important;
+  }
+  .joystick-stick {
+    width: 38px !important;
+    height: 38px !important;
+  }
+  .touch-btn {
+    width: 56px !important;
+    height: 56px !important;
+    font-size: 1.4rem !important;
+    border-width: 2px !important;
+  }
+}
+
+
 
 
