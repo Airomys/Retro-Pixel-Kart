@@ -462,7 +462,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let baseRect = null;
     let centerX = 0;
     let centerY = 0;
-    const maxRadius = 45; // Max movement radius in pixels
+    const maxRadius = 50; // Max movement radius in pixels
 
     const handleTouchStart = (e) => {
       joystickActive = true;
@@ -513,10 +513,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
       if (gameEngine.localKart) {
         // Horizontal mapping (Steering Left/Right)
-        if (factorX < -0.25) {
+        if (factorX < -0.45) {
           gameEngine.localKart.keys.a = true;
           gameEngine.localKart.keys.d = false;
-        } else if (factorX > 0.25) {
+        } else if (factorX > 0.45) {
           gameEngine.localKart.keys.d = true;
           gameEngine.localKart.keys.a = false;
         } else {
@@ -525,11 +525,11 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         // Vertical mapping (Throttle/Reverse)
-        if (factorY < -0.25) {
+        if (factorY < -0.45) {
           // Dragged UP -> Accelerate
           gameEngine.localKart.keys.w = true;
           gameEngine.localKart.keys.s = false;
-        } else if (factorY > 0.25) {
+        } else if (factorY > 0.45) {
           // Dragged DOWN -> Brake/Reverse
           gameEngine.localKart.keys.s = true;
           gameEngine.localKart.keys.w = false;
