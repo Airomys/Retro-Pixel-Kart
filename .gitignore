@@ -1,0 +1,9 @@
+# Local development / temporary files
+.DS_Store
+*.log
+node_modules/
+
+# Local settings / Agent data
+.agents/
+.gemini/
+brain/
