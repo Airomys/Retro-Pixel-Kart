@@ -155,13 +155,8 @@ export class Kart {
       this.speed = Math.max(this.speed + 120 * dt, currentMaxSpeed); // quick boost push
     }
 
-    // 2. Acceleration / Deceleration (Auto-Gas on touch devices)
-    let driveForward = this.keys.w;
-    if (window.isTouchDeviceActive && !this.keys.s) {
-      driveForward = true;
-    }
-
-    if (driveForward && this.raceStarted && !this.raceFinished && !this.spinTimer) {
+    // 2. Acceleration / Deceleration
+    if (this.keys.w && this.raceStarted && !this.raceFinished && !this.spinTimer) {
       this.speed += this.acceleration * dt;
       if (this.speed > currentMaxSpeed && this.boostTimer <= 0) this.speed = currentMaxSpeed;
     } else if (this.keys.s && this.raceStarted && !this.raceFinished && !this.spinTimer) {

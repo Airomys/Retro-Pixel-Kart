@@ -484,6 +484,7 @@ window.addEventListener('DOMContentLoaded', () => {
   bindTouchKey('touch-left', 'a');
   bindTouchKey('touch-right', 'd');
   bindTouchKey('touch-brake', 's');
+  bindTouchKey('touch-gas', 'w');
 
   // Bind right-side quick power-up button
   const touchItemBtn = document.getElementById('touch-item');

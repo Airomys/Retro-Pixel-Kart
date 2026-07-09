@@ -554,4 +554,14 @@ body.touch-enabled .touch-controls {
   transform: scale(1.05);
 }
 
+/* Center HUD Speedometer and Power-up Box to the bottom-middle on Touch Devices to prevent button overlap */
+body.touch-enabled .hud-bottom-left {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: 20px !important;
+  transform: translateX(-50%) !important;
+  z-index: 5;
+}
+
+
 
