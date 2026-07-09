@@ -452,51 +452,109 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('orientationchange', checkOrientation);
   checkOrientation(); // Initial run
 
-  // Bind Touch Start/End listeners to virtual arcade buttons
-  const bindTouchKey = (elementId, keyName) => {
-    const btn = document.getElementById(elementId);
-    if (btn) {
-      btn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (gameEngine.localKart) {
-          gameEngine.localKart.keys[keyName] = true;
-          // Mutual exclusion for steering
-          if (keyName === 'a') gameEngine.localKart.keys.d = false;
-          if (keyName === 'd') gameEngine.localKart.keys.a = false;
-        }
-      });
-      btn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        if (gameEngine.localKart) {
-          gameEngine.localKart.keys[keyName] = false;
-        }
-      });
-      btn.addEventListener('touchcancel', (e) => {
-        e.preventDefault();
-        if (gameEngine.localKart) {
-          gameEngine.localKart.keys[keyName] = false;
-        }
-      });
-    }
-  };
+  // Bind Virtual Joystick (Right Hand Steering & Throttle)
+  const joystickZone = document.getElementById('joystick-zone');
+  const joystickKnob = document.getElementById('joystick-knob');
+  const joystickBase = document.getElementById('joystick-base');
 
-  // Bind controls
-  bindTouchKey('touch-left', 'a');
-  bindTouchKey('touch-right', 'd');
-  bindTouchKey('touch-brake', 's');
-  bindTouchKey('touch-gas', 'w');
+  if (joystickZone && joystickKnob && joystickBase) {
+    let joystickActive = false;
+    let baseRect = null;
+    let centerX = 0;
+    let centerY = 0;
+    const maxRadius = 45; // Max movement radius in pixels
 
-  // Bind right-side quick power-up button
+    const handleTouchStart = (e) => {
+      joystickActive = true;
+      baseRect = joystickBase.getBoundingClientRect();
+      centerX = baseRect.left + baseRect.width / 2;
+      centerY = baseRect.top + baseRect.height / 2;
+      updateJoystickPosition(e.touches[0].clientX, e.touches[0].clientY);
+    };
+
+    const handleTouchMove = (e) => {
+      if (!joystickActive) return;
+      e.preventDefault();
+      updateJoystickPosition(e.touches[0].clientX, e.touches[0].clientY);
+    };
+
+    const handleTouchEnd = () => {
+      if (!joystickActive) return;
+      joystickActive = false;
+      
+      // Reset knob visual position
+      joystickKnob.style.transform = `translate3d(0px, 0px, 0)`;
+      
+      // Reset all keys controlled by joystick
+      if (gameEngine.localKart) {
+        gameEngine.localKart.keys.a = false;
+        gameEngine.localKart.keys.d = false;
+        gameEngine.localKart.keys.w = false;
+        gameEngine.localKart.keys.s = false;
+      }
+    };
+
+    const updateJoystickPosition = (touchX, touchY) => {
+      let dx = touchX - centerX;
+      let dy = touchY - centerY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > maxRadius) {
+        dx = (dx / distance) * maxRadius;
+        dy = (dy / distance) * maxRadius;
+      }
+
+      // Move knob
+      joystickKnob.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+
+      // Map deflection factor from -1.0 to 1.0
+      const factorX = dx / maxRadius;
+      const factorY = dy / maxRadius;
+
+      if (gameEngine.localKart) {
+        // Horizontal mapping (Steering Left/Right)
+        if (factorX < -0.25) {
+          gameEngine.localKart.keys.a = true;
+          gameEngine.localKart.keys.d = false;
+        } else if (factorX > 0.25) {
+          gameEngine.localKart.keys.d = true;
+          gameEngine.localKart.keys.a = false;
+        } else {
+          gameEngine.localKart.keys.a = false;
+          gameEngine.localKart.keys.d = false;
+        }
+
+        // Vertical mapping (Throttle/Reverse)
+        if (factorY < -0.25) {
+          // Dragged UP -> Accelerate
+          gameEngine.localKart.keys.w = true;
+          gameEngine.localKart.keys.s = false;
+        } else if (factorY > 0.25) {
+          // Dragged DOWN -> Brake/Reverse
+          gameEngine.localKart.keys.s = true;
+          gameEngine.localKart.keys.w = false;
+        } else {
+          gameEngine.localKart.keys.w = false;
+          gameEngine.localKart.keys.s = false;
+        }
+      }
+    };
+
+    joystickZone.addEventListener('touchstart', handleTouchStart, { passive: false });
+    joystickZone.addEventListener('touchmove', handleTouchMove, { passive: false });
+    joystickZone.addEventListener('touchend', handleTouchEnd);
+    joystickZone.addEventListener('touchcancel', handleTouchEnd);
+  }
+
+  // Bind left-side quick power-up button
   const touchItemBtn = document.getElementById('touch-item');
   if (touchItemBtn) {
-    touchItemBtn.addEventListener('touchstart', (e) => {
+    const triggerItem = (e) => {
       e.preventDefault();
       usePowerUp();
-    });
-    touchItemBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      usePowerUp();
-    });
+    };
+    touchItemBtn.addEventListener('touchstart', triggerItem);
+    touchItemBtn.addEventListener('click', triggerItem);
   }
 
   // Buttons Logic

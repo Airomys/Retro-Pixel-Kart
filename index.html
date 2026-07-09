@@ -96,16 +96,15 @@
 
     <!-- Touch Controls Overlay for Mobile (Nested inside HUD) -->
     <div id="touch-controls" class="touch-controls">
-      <!-- Left Hand Group: Large responsive steering buttons -->
-      <div class="touch-group">
-        <div id="touch-left" class="touch-btn">◀</div>
-        <div id="touch-right" class="touch-btn">▶</div>
-      </div>
-      <!-- Right Hand Group: Item, Brake, and Gas buttons -->
+      <!-- Left Hand Group: Item Button -->
       <div class="touch-group">
         <div id="touch-item" class="touch-btn touch-btn-yellow">⚡</div>
-        <div id="touch-brake" class="touch-btn touch-btn-pink">▼</div>
-        <div id="touch-gas" class="touch-btn">▲</div>
+      </div>
+      <!-- Right Hand Group: Single Virtual Joystick for Steering & Throttle -->
+      <div id="joystick-zone">
+        <div id="joystick-base">
+          <div id="joystick-knob"></div>
+        </div>
       </div>
     </div>
 
