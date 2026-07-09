@@ -29,6 +29,9 @@ function showScreen(screenId) {
     target.classList.add('active');
     activeScreen = screenId;
   }
+  // Hide touch controls when returning to menus
+  const touchCtrls = document.getElementById('touch-controls');
+  if (touchCtrls) touchCtrls.style.display = 'none';
 }
 
 // Start actual gameplay loop
@@ -37,6 +40,13 @@ function startRacing(roomId, playerName, isOnline) {
   document.getElementById('ui-container').style.display = 'none';
   document.getElementById('canvas-container').style.display = 'block';
   document.getElementById('hud').style.display = 'flex';
+
+  // Show touch controls only if touch support is detected
+  const isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  const touchCtrls = document.getElementById('touch-controls');
+  if (isTouchDevice && touchCtrls) {
+    touchCtrls.style.display = 'flex';
+  }
 
   // Reset overlay
   document.getElementById('finish-overlay').style.display = 'none';
@@ -429,12 +439,6 @@ window.addEventListener('DOMContentLoaded', () => {
       e.preventDefault(); // prevent double triggers on mobile
       usePowerUp();
     });
-  }
-
-  // Detect mobile/touch support and activate touch D-pad overlays
-  const isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-  if (isTouchDevice) {
-    document.getElementById('touch-controls').style.display = 'flex';
   }
 
   // Bind Touch Start/End listeners to virtual D-pad buttons
