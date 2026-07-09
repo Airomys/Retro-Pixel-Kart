@@ -434,7 +434,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // Detect mobile/touch support and activate touch D-pad overlays
   const isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
   if (isTouchDevice) {
-    document.getElementById('touch-controls').style.display = 'flex';
+    document.body.classList.add('touch-enabled');
+    window.isTouchDeviceActive = true;
   }
 
   // Force Landscape Orientation check on resize/load
@@ -451,75 +452,7 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('orientationchange', checkOrientation);
   checkOrientation(); // Initial run
 
-  // Bind Virtual Joystick (Left Hand Steering)
-  const joystickZone = document.getElementById('joystick-zone');
-  const joystickKnob = document.getElementById('joystick-knob');
-  const joystickBase = document.getElementById('joystick-base');
-
-  if (joystickZone && joystickKnob && joystickBase) {
-    let joystickActive = false;
-    let baseRect = null;
-    let centerX = 0;
-    let centerY = 0;
-    const maxRadius = 38; // Maximum knob travel distance
-
-    const handleTouchStart = (e) => {
-      joystickActive = true;
-      baseRect = joystickBase.getBoundingClientRect();
-      centerX = baseRect.left + baseRect.width / 2;
-      centerY = baseRect.top + baseRect.height / 2;
-      updateJoystickPosition(e.touches[0].clientX, e.touches[0].clientY);
-    };
-
-    const handleTouchMove = (e) => {
-      if (!joystickActive) return;
-      e.preventDefault();
-      updateJoystickPosition(e.touches[0].clientX, e.touches[0].clientY);
-    };
-
-    const handleTouchEnd = () => {
-      if (!joystickActive) return;
-      joystickActive = false;
-      joystickKnob.style.transform = `translate3d(0px, 0px, 0)`;
-      if (gameEngine.localKart) {
-        gameEngine.localKart.keys.a = false;
-        gameEngine.localKart.keys.d = false;
-      }
-    };
-
-    const updateJoystickPosition = (touchX, touchY) => {
-      let dx = touchX - centerX;
-      let dy = touchY - centerY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      if (distance > maxRadius) {
-        dx = (dx / distance) * maxRadius;
-        dy = (dy / distance) * maxRadius;
-      }
-
-      joystickKnob.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
-
-      if (gameEngine.localKart) {
-        if (dx < -12) {
-          gameEngine.localKart.keys.a = true;
-          gameEngine.localKart.keys.d = false;
-        } else if (dx > 12) {
-          gameEngine.localKart.keys.d = true;
-          gameEngine.localKart.keys.a = false;
-        } else {
-          gameEngine.localKart.keys.a = false;
-          gameEngine.localKart.keys.d = false;
-        }
-      }
-    };
-
-    joystickZone.addEventListener('touchstart', handleTouchStart, { passive: false });
-    joystickZone.addEventListener('touchmove', handleTouchMove, { passive: false });
-    joystickZone.addEventListener('touchend', handleTouchEnd);
-    joystickZone.addEventListener('touchcancel', handleTouchEnd);
-  }
-
-  // Bind Touch Start/End listeners to Right Hand Pedals
+  // Bind Touch Start/End listeners to virtual arcade buttons
   const bindTouchKey = (elementId, keyName) => {
     const btn = document.getElementById(elementId);
     if (btn) {
@@ -527,6 +460,9 @@ window.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         if (gameEngine.localKart) {
           gameEngine.localKart.keys[keyName] = true;
+          // Mutual exclusion for steering
+          if (keyName === 'a') gameEngine.localKart.keys.d = false;
+          if (keyName === 'd') gameEngine.localKart.keys.a = false;
         }
       });
       btn.addEventListener('touchend', (e) => {
@@ -544,8 +480,23 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  bindTouchKey('touch-gas', 'w');
+  // Bind controls
+  bindTouchKey('touch-left', 'a');
+  bindTouchKey('touch-right', 'd');
   bindTouchKey('touch-brake', 's');
+
+  // Bind right-side quick power-up button
+  const touchItemBtn = document.getElementById('touch-item');
+  if (touchItemBtn) {
+    touchItemBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      usePowerUp();
+    });
+    touchItemBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      usePowerUp();
+    });
+  }
 
   // Buttons Logic
   document.getElementById('btn-local-play').addEventListener('click', () => {

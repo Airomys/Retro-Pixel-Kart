@@ -93,6 +93,21 @@
         </div>
       </div>
     </div>
+
+    <!-- Touch Controls Overlay for Mobile (Nested inside HUD) -->
+    <div id="touch-controls" class="touch-controls">
+      <!-- Left Hand Group: Large responsive steering buttons -->
+      <div class="touch-group">
+        <div id="touch-left" class="touch-btn">◀</div>
+        <div id="touch-right" class="touch-btn">▶</div>
+      </div>
+      <!-- Right Hand Group: Item and Brake buttons -->
+      <div class="touch-group">
+        <div id="touch-item" class="touch-btn touch-btn-yellow">⚡</div>
+        <div id="touch-brake" class="touch-btn touch-btn-pink">▼</div>
+      </div>
+    </div>
+
   </div>
 
   <!-- UI Navigation Screens -->
@@ -181,19 +196,6 @@
     <div style="font-size: 0.6rem; color: var(--text-muted); margin-top: 15px;">ROTATE YOUR DEVICE TO LANDSCAPE</div>
   </div>
 
-  <!-- Touch Controls Overlay for Mobile -->
-  <div id="touch-controls" class="touch-controls">
-    <!-- Left Hand Group: Virtual Joystick for Steering -->
-    <div id="joystick-zone">
-      <div id="joystick-base">
-        <div id="joystick-knob"></div>
-      </div>
-    </div>
-    <!-- Right Hand Group: Pedals -->
-    <div class="touch-group">
-      <div id="touch-brake" class="touch-btn touch-btn-pink">▼</div>
-      <div id="touch-gas" class="touch-btn">▲</div>
-    </div>
   </div>
 
   <!-- Game Scripts -->
