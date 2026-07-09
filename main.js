@@ -487,6 +487,7 @@ window.addEventListener('DOMContentLoaded', () => {
       
       // Reset all keys controlled by joystick
       if (gameEngine.localKart) {
+        gameEngine.localKart.steerAmount = 0; // Reset analog steer
         gameEngine.localKart.keys.a = false;
         gameEngine.localKart.keys.d = false;
         gameEngine.localKart.keys.w = false;
@@ -512,24 +513,22 @@ window.addEventListener('DOMContentLoaded', () => {
       const factorY = dy / maxRadius;
 
       if (gameEngine.localKart) {
-        // Horizontal mapping (Steering Left/Right)
-        if (factorX < -0.55) {
-          gameEngine.localKart.keys.a = true;
-          gameEngine.localKart.keys.d = false;
-        } else if (factorX > 0.55) {
-          gameEngine.localKart.keys.d = true;
-          gameEngine.localKart.keys.a = false;
-        } else {
-          gameEngine.localKart.keys.a = false;
-          gameEngine.localKart.keys.d = false;
+        // Horizontal mapping (Analog Steering Left/Right)
+        // Deflections under 0.25 do not steer. Above 0.25 is scaled linearly
+        let steerFactor = 0;
+        if (Math.abs(factorX) > 0.25) {
+          const sign = Math.sign(factorX);
+          steerFactor = sign * ((Math.abs(factorX) - 0.25) / 0.75);
         }
+        gameEngine.localKart.steerAmount = steerFactor;
 
         // Vertical mapping (Throttle/Reverse)
-        if (factorY < -0.55) {
+        // Requires 0.40 deflection to activate to reduce vertical sensitivity
+        if (factorY < -0.40) {
           // Dragged UP -> Accelerate
           gameEngine.localKart.keys.w = true;
           gameEngine.localKart.keys.s = false;
-        } else if (factorY > 0.55) {
+        } else if (factorY > 0.40) {
           // Dragged DOWN -> Brake/Reverse
           gameEngine.localKart.keys.s = true;
           gameEngine.localKart.keys.w = false;

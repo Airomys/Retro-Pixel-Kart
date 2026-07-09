@@ -16,7 +16,8 @@ export class Kart {
     this.acceleration = 40;
     this.deceleration = 30;
     this.drag = 5;
-    this.turnSpeed = 3.0; // rad/sec
+    this.turnSpeed = 2.0; // Reduced from 3.0 for smoother steering control
+    this.steerAmount = 0; // Float from -1.0 (left) to 1.0 (right) for analog touch steering
     
     // Controls input state (for local player)
     this.keys = { w: false, a: false, s: false, d: false };
@@ -174,14 +175,18 @@ export class Kart {
     }
 
     // 3. Steering (only turns when moving)
+    let steerInput = 0;
+    if (this.keys.a) steerInput = 1; // Left steer
+    if (this.keys.d) steerInput = -1; // Right steer
+
+    // Override keyboard keys with analog touch steering if active
+    if (this.steerAmount !== undefined && Math.abs(this.steerAmount) > 0.01) {
+      steerInput = -this.steerAmount; // steerAmount is +1.0 for Right, so invert for positive Y-axis rotation
+    }
+
     if (Math.abs(this.speed) > 2) {
       const steeringDirection = this.speed > 0 ? 1 : -1;
-      if (this.keys.a) {
-        this.rotation += this.turnSpeed * dt * steeringDirection;
-      }
-      if (this.keys.d) {
-        this.rotation -= this.turnSpeed * dt * steeringDirection;
-      }
+      this.rotation += this.turnSpeed * dt * steeringDirection * steerInput;
     }
 
     // 4. Update coordinates
