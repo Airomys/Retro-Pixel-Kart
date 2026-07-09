@@ -174,14 +174,19 @@
 
   </div>
 
-
+  <!-- Portrait Orientation Warning -->
+  <div id="portrait-warning">
+    <div style="font-size: 3rem; margin-bottom: 20px;">🔄</div>
+    <div style="line-height: 1.5;">RUOTA IL TUO DISPOSITIVO IN ORIZZONTALE PER GIOCARE</div>
+    <div style="font-size: 0.6rem; color: var(--text-muted); margin-top: 15px;">ROTATE YOUR DEVICE TO LANDSCAPE</div>
+  </div>
 
   <!-- Touch Controls Overlay for Mobile -->
   <div id="touch-controls" class="touch-controls">
-    <!-- Left Hand Group: Virtual Joystick -->
-    <div class="joystick-container" id="joystick-container">
-      <div class="joystick-base">
-        <div class="joystick-stick" id="joystick-stick"></div>
+    <!-- Left Hand Group: Virtual Joystick for Steering -->
+    <div id="joystick-zone">
+      <div id="joystick-base">
+        <div id="joystick-knob"></div>
       </div>
     </div>
     <!-- Right Hand Group: Pedals -->

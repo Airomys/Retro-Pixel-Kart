@@ -12,8 +12,6 @@ let networkSync;
 let audio;
 let currentPowerUp = null;
 let isRollingPowerUp = false;
-let touchingGas = false;
-let touchingBrake = false;
 
 let activeScreen = 'screen-menu';
 let selectedCharId = 'turtle';
@@ -31,9 +29,6 @@ function showScreen(screenId) {
     target.classList.add('active');
     activeScreen = screenId;
   }
-  // Hide touch controls when returning to menus
-  const touchCtrls = document.getElementById('touch-controls');
-  if (touchCtrls) touchCtrls.style.display = 'none';
 }
 
 // Start actual gameplay loop
@@ -42,13 +37,6 @@ function startRacing(roomId, playerName, isOnline) {
   document.getElementById('ui-container').style.display = 'none';
   document.getElementById('canvas-container').style.display = 'block';
   document.getElementById('hud').style.display = 'flex';
-
-  // Show touch controls only if touch support is detected
-  const isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-  const touchCtrls = document.getElementById('touch-controls');
-  if (isTouchDevice && touchCtrls) {
-    touchCtrls.style.display = 'flex';
-  }
 
   // Reset overlay
   document.getElementById('finish-overlay').style.display = 'none';
@@ -443,78 +431,75 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Bind Touch Start/End listeners to virtual Pedals (Gas & Brake)
-  const bindTouchKey = (elementId, keyName) => {
-    const btn = document.getElementById(elementId);
-    if (btn) {
-      btn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (elementId === 'touch-gas') touchingGas = true;
-        if (elementId === 'touch-brake') touchingBrake = true;
-        if (gameEngine.localKart) {
-          gameEngine.localKart.keys[keyName] = true;
-        }
-      });
-      btn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        if (elementId === 'touch-gas') touchingGas = false;
-        if (elementId === 'touch-brake') touchingBrake = false;
-        if (gameEngine.localKart) {
-          gameEngine.localKart.keys[keyName] = false;
-        }
-      });
-      btn.addEventListener('touchcancel', (e) => {
-        e.preventDefault();
-        if (elementId === 'touch-gas') touchingGas = false;
-        if (elementId === 'touch-brake') touchingBrake = false;
-        if (gameEngine.localKart) {
-          gameEngine.localKart.keys[keyName] = false;
-        }
-      });
+  // Detect mobile/touch support and activate touch D-pad overlays
+  const isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  if (isTouchDevice) {
+    document.getElementById('touch-controls').style.display = 'flex';
+  }
+
+  // Force Landscape Orientation check on resize/load
+  const checkOrientation = () => {
+    const warning = document.getElementById('portrait-warning');
+    if (!warning) return;
+    if (window.innerHeight > window.innerWidth) {
+      warning.style.display = 'flex';
+    } else {
+      warning.style.display = 'none';
     }
   };
+  window.addEventListener('resize', checkOrientation);
+  window.addEventListener('orientationchange', checkOrientation);
+  checkOrientation(); // Initial run
 
-  bindTouchKey('touch-gas', 'w');
-  bindTouchKey('touch-brake', 's');
+  // Bind Virtual Joystick (Left Hand Steering)
+  const joystickZone = document.getElementById('joystick-zone');
+  const joystickKnob = document.getElementById('joystick-knob');
+  const joystickBase = document.getElementById('joystick-base');
 
-  // Virtual Joystick implementation for touch devices
-  function setupJoystick() {
-    const container = document.getElementById('joystick-container');
-    const stick = document.getElementById('joystick-stick');
-    if (!container || !stick) return;
+  if (joystickZone && joystickKnob && joystickBase) {
+    let joystickActive = false;
+    let baseRect = null;
+    let centerX = 0;
+    let centerY = 0;
+    const maxRadius = 38; // Maximum knob travel distance
 
-    let dragStart = null;
-    const maxRadius = 35; // Maximum distance stick can travel from base center
-
-    const handleStart = (e) => {
-      e.preventDefault();
-      const touch = e.touches ? e.touches[0] : e;
-      const rect = container.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      dragStart = { x: centerX, y: centerY };
+    const handleTouchStart = (e) => {
+      joystickActive = true;
+      baseRect = joystickBase.getBoundingClientRect();
+      centerX = baseRect.left + baseRect.width / 2;
+      centerY = baseRect.top + baseRect.height / 2;
+      updateJoystickPosition(e.touches[0].clientX, e.touches[0].clientY);
     };
 
-    const handleMove = (e) => {
-      if (!dragStart) return;
+    const handleTouchMove = (e) => {
+      if (!joystickActive) return;
       e.preventDefault();
-      const touch = e.touches ? e.touches[0] : e;
-      
-      let dx = touch.clientX - dragStart.x;
-      let dy = touch.clientY - dragStart.y;
-      
+      updateJoystickPosition(e.touches[0].clientX, e.touches[0].clientY);
+    };
+
+    const handleTouchEnd = () => {
+      if (!joystickActive) return;
+      joystickActive = false;
+      joystickKnob.style.transform = `translate3d(0px, 0px, 0)`;
+      if (gameEngine.localKart) {
+        gameEngine.localKart.keys.a = false;
+        gameEngine.localKart.keys.d = false;
+      }
+    };
+
+    const updateJoystickPosition = (touchX, touchY) => {
+      let dx = touchX - centerX;
+      let dy = touchY - centerY;
       const distance = Math.sqrt(dx * dx + dy * dy);
+
       if (distance > maxRadius) {
         dx = (dx / distance) * maxRadius;
         dy = (dy / distance) * maxRadius;
       }
-      
-      // Move stick visual
-      stick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-      
-      // Apply keys based on thresholds
+
+      joystickKnob.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+
       if (gameEngine.localKart) {
-        // Steering
         if (dx < -12) {
           gameEngine.localKart.keys.a = true;
           gameEngine.localKart.keys.d = false;
@@ -525,48 +510,45 @@ window.addEventListener('DOMContentLoaded', () => {
           gameEngine.localKart.keys.a = false;
           gameEngine.localKart.keys.d = false;
         }
-
-        // Forward/backward backup acceleration
-        if (dy < -12) {
-          gameEngine.localKart.keys.w = true;
-          gameEngine.localKart.keys.s = false;
-        } else if (dy > 12) {
-          gameEngine.localKart.keys.s = true;
-          gameEngine.localKart.keys.w = false;
-        } else {
-          if (!touchingGas) gameEngine.localKart.keys.w = false;
-          if (!touchingBrake) gameEngine.localKart.keys.s = false;
-        }
       }
     };
 
-    const handleEnd = (e) => {
-      if (!dragStart) return;
-      dragStart = null;
-      stick.style.transform = 'translate(-50%, -50%)'; // Reset position
-      
-      if (gameEngine.localKart) {
-        gameEngine.localKart.keys.a = false;
-        gameEngine.localKart.keys.d = false;
-        if (!touchingGas) gameEngine.localKart.keys.w = false;
-        if (!touchingBrake) gameEngine.localKart.keys.s = false;
-      }
-    };
-
-    container.addEventListener('touchstart', handleStart, { passive: false });
-    container.addEventListener('touchmove', handleMove, { passive: false });
-    container.addEventListener('touchend', handleEnd);
-    container.addEventListener('touchcancel', handleEnd);
+    joystickZone.addEventListener('touchstart', handleTouchStart, { passive: false });
+    joystickZone.addEventListener('touchmove', handleTouchMove, { passive: false });
+    joystickZone.addEventListener('touchend', handleTouchEnd);
+    joystickZone.addEventListener('touchcancel', handleTouchEnd);
   }
 
-  setupJoystick();
+  // Bind Touch Start/End listeners to Right Hand Pedals
+  const bindTouchKey = (elementId, keyName) => {
+    const btn = document.getElementById(elementId);
+    if (btn) {
+      btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (gameEngine.localKart) {
+          gameEngine.localKart.keys[keyName] = true;
+        }
+      });
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (gameEngine.localKart) {
+          gameEngine.localKart.keys[keyName] = false;
+        }
+      });
+      btn.addEventListener('touchcancel', (e) => {
+        e.preventDefault();
+        if (gameEngine.localKart) {
+          gameEngine.localKart.keys[keyName] = false;
+        }
+      });
+    }
+  };
+
+  bindTouchKey('touch-gas', 'w');
+  bindTouchKey('touch-brake', 's');
 
   // Buttons Logic
   document.getElementById('btn-local-play').addEventListener('click', () => {
-    if (!audio) audio = new RetroAudio();
-    audio.init();
-    if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
-    
     const user = document.getElementById('username').value.trim();
     startRacing('LOCAL_SOLO', user, false);
   });
@@ -580,10 +562,6 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-join-room').addEventListener('click', () => {
-    if (!audio) audio = new RetroAudio();
-    audio.init();
-    if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
-
     const user = document.getElementById('username').value.trim();
     const rId = document.getElementById('room-id').value.trim() || 'LOBBY1';
     startRacing(rId, user, true);
