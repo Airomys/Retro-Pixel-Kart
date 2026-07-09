@@ -12,6 +12,8 @@ let networkSync;
 let audio;
 let currentPowerUp = null;
 let isRollingPowerUp = false;
+let touchingGas = false;
+let touchingBrake = false;
 
 let activeScreen = 'screen-menu';
 let selectedCharId = 'turtle';
@@ -441,24 +443,30 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Bind Touch Start/End listeners to virtual D-pad buttons
+  // Bind Touch Start/End listeners to virtual Pedals (Gas & Brake)
   const bindTouchKey = (elementId, keyName) => {
     const btn = document.getElementById(elementId);
     if (btn) {
       btn.addEventListener('touchstart', (e) => {
         e.preventDefault();
+        if (elementId === 'touch-gas') touchingGas = true;
+        if (elementId === 'touch-brake') touchingBrake = true;
         if (gameEngine.localKart) {
           gameEngine.localKart.keys[keyName] = true;
         }
       });
       btn.addEventListener('touchend', (e) => {
         e.preventDefault();
+        if (elementId === 'touch-gas') touchingGas = false;
+        if (elementId === 'touch-brake') touchingBrake = false;
         if (gameEngine.localKart) {
           gameEngine.localKart.keys[keyName] = false;
         }
       });
       btn.addEventListener('touchcancel', (e) => {
         e.preventDefault();
+        if (elementId === 'touch-gas') touchingGas = false;
+        if (elementId === 'touch-brake') touchingBrake = false;
         if (gameEngine.localKart) {
           gameEngine.localKart.keys[keyName] = false;
         }
@@ -466,13 +474,99 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  bindTouchKey('touch-left', 'a');
-  bindTouchKey('touch-right', 'd');
   bindTouchKey('touch-gas', 'w');
   bindTouchKey('touch-brake', 's');
 
+  // Virtual Joystick implementation for touch devices
+  function setupJoystick() {
+    const container = document.getElementById('joystick-container');
+    const stick = document.getElementById('joystick-stick');
+    if (!container || !stick) return;
+
+    let dragStart = null;
+    const maxRadius = 35; // Maximum distance stick can travel from base center
+
+    const handleStart = (e) => {
+      e.preventDefault();
+      const touch = e.touches ? e.touches[0] : e;
+      const rect = container.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      dragStart = { x: centerX, y: centerY };
+    };
+
+    const handleMove = (e) => {
+      if (!dragStart) return;
+      e.preventDefault();
+      const touch = e.touches ? e.touches[0] : e;
+      
+      let dx = touch.clientX - dragStart.x;
+      let dy = touch.clientY - dragStart.y;
+      
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance > maxRadius) {
+        dx = (dx / distance) * maxRadius;
+        dy = (dy / distance) * maxRadius;
+      }
+      
+      // Move stick visual
+      stick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+      
+      // Apply keys based on thresholds
+      if (gameEngine.localKart) {
+        // Steering
+        if (dx < -12) {
+          gameEngine.localKart.keys.a = true;
+          gameEngine.localKart.keys.d = false;
+        } else if (dx > 12) {
+          gameEngine.localKart.keys.d = true;
+          gameEngine.localKart.keys.a = false;
+        } else {
+          gameEngine.localKart.keys.a = false;
+          gameEngine.localKart.keys.d = false;
+        }
+
+        // Forward/backward backup acceleration
+        if (dy < -12) {
+          gameEngine.localKart.keys.w = true;
+          gameEngine.localKart.keys.s = false;
+        } else if (dy > 12) {
+          gameEngine.localKart.keys.s = true;
+          gameEngine.localKart.keys.w = false;
+        } else {
+          if (!touchingGas) gameEngine.localKart.keys.w = false;
+          if (!touchingBrake) gameEngine.localKart.keys.s = false;
+        }
+      }
+    };
+
+    const handleEnd = (e) => {
+      if (!dragStart) return;
+      dragStart = null;
+      stick.style.transform = 'translate(-50%, -50%)'; // Reset position
+      
+      if (gameEngine.localKart) {
+        gameEngine.localKart.keys.a = false;
+        gameEngine.localKart.keys.d = false;
+        if (!touchingGas) gameEngine.localKart.keys.w = false;
+        if (!touchingBrake) gameEngine.localKart.keys.s = false;
+      }
+    };
+
+    container.addEventListener('touchstart', handleStart, { passive: false });
+    container.addEventListener('touchmove', handleMove, { passive: false });
+    container.addEventListener('touchend', handleEnd);
+    container.addEventListener('touchcancel', handleEnd);
+  }
+
+  setupJoystick();
+
   // Buttons Logic
   document.getElementById('btn-local-play').addEventListener('click', () => {
+    if (!audio) audio = new RetroAudio();
+    audio.init();
+    if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
+    
     const user = document.getElementById('username').value.trim();
     startRacing('LOCAL_SOLO', user, false);
   });
@@ -486,6 +580,10 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-join-room').addEventListener('click', () => {
+    if (!audio) audio = new RetroAudio();
+    audio.init();
+    if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
+
     const user = document.getElementById('username').value.trim();
     const rId = document.getElementById('room-id').value.trim() || 'LOBBY1';
     startRacing(rId, user, true);

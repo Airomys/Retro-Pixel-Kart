@@ -246,7 +246,10 @@ input[type="text"]:focus, select:focus {
   width: 100%;
   height: 100%;
   display: block;
-  image-rendering: pixelated; /* Essential for 32-bit pixel feel */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-optimize-contrast; /* iOS/Safari crisp-edges */
+  image-rendering: -moz-crisp-edges;
 }
 
 /* HUD Overlay */
@@ -604,5 +607,60 @@ input[type="text"]:focus, select:focus {
     border-width: 2px !important;
   }
 }
+
+/* Virtual Joystick Styling */
+.joystick-container {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.joystick-base {
+  width: 100px;
+  height: 100px;
+  background: rgba(18, 18, 38, 0.65);
+  border: 3px solid var(--neon-cyan);
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.3), inset 0 0 10px rgba(0,0,0,0.8);
+  pointer-events: none;
+}
+
+.joystick-stick {
+  width: 44px;
+  height: 44px;
+  background: var(--neon-cyan);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px var(--neon-cyan);
+  pointer-events: none;
+}
+
+/* Joystick scale inside mobile landscape orientation */
+@media (max-height: 480px) and (orientation: landscape) {
+  .joystick-container {
+    width: 80px !important;
+    height: 80px !important;
+  }
+  .joystick-base {
+    width: 70px !important;
+    height: 70px !important;
+    border-width: 2px !important;
+  }
+  .joystick-stick {
+    width: 30px !important;
+    height: 30px !important;
+  }
+}
+
 
 
